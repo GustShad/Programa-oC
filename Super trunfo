@@ -1,0 +1,164 @@
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+#include <time.h>
+
+#define MAX_CARTAS 40
+#define MAX_ATRIBUTOS 5
+#define MAX_NOME 50
+
+typedef struct {
+    char nome[MAX_NOME];
+    int atributos[MAX_ATRIBUTOS];
+} Carta;
+
+typedef struct {
+    Carta cartas[MAX_CARTAS];
+    int quantidade;
+} Baralho;
+
+// Funções do programa
+void inicializarBaralho(Baralho *baralho);
+void embaralhar(Baralho *baralho);
+void distribuirCartas(Baralho *baralho, Baralho *jogador1, Baralho *jogador2);
+void jogar(Baralho *jogador1, Baralho *jogador2);
+int compararAtributos(Carta carta1, Carta carta2, int atributoEscolhido);
+void mostrarCarta(Carta carta);
+
+int main() {
+    srand(time(NULL)); // Inicializa a semente para números aleatórios
+    
+    Baralho baralho, jogador1, jogador2;
+    
+    inicializarBaralho(&baralho);
+    embaralhar(&baralho);
+    distribuirCartas(&baralho, &jogador1, &jogador2);
+    jogar(&jogador1, &jogador2);
+    
+    return 0;
+}
+
+void inicializarBaralho(Baralho *baralho) {
+    // Exemplo de inicialização - você pode modificar para ler de arquivo
+    strcpy(baralho->cartas[0].nome, "Carro Veloz");
+    baralho->cartas[0].atributos[0] = 90; // Velocidade
+    baralho->cartas[0].atributos[1] = 70; // Potência
+    baralho->cartas[0].atributos[2] = 60; // Peso
+    baralho->cartas[0].atributos[3] = 80; // Aceleração
+    baralho->cartas[0].atributos[4] = 50; // Consumo
+    
+    // Adicione mais cartas conforme necessário
+    baralho->quantidade = 1; // Atualize com o número real de cartas
+}
+
+void embaralhar(Baralho *baralho) {
+    for (int i = 0; i < baralho->quantidade; i++) {
+        int j = rand() % baralho->quantidade;
+        Carta temp = baralho->cartas[i];
+        baralho->cartas[i] = baralho->cartas[j];
+        baralho->cartas[j] = temp;
+    }
+}
+
+void distribuirCartas(Baralho *baralho, Baralho *jogador1, Baralho *jogador2) {
+    jogador1->quantidade = 0;
+    jogador2->quantidade = 0;
+    
+    for (int i = 0; i < baralho->quantidade; i++) {
+        if (i % 2 == 0) {
+            jogador1->cartas[jogador1->quantidade++] = baralho->cartas[i];
+        } else {
+            jogador2->cartas[jogador2->quantidade++] = baralho->cartas[i];
+        }
+    }
+}
+
+void jogar(Baralho *jogador1, Baralho *jogador2) {
+    int rodada = 1;
+    
+    while (jogador1->quantidade > 0 && jogador2->quantidade > 0) {
+        printf("\n=== Rodada %d ===\n", rodada++);
+        
+        // Jogador 1 escolhe atributo
+        printf("Jogador 1, escolha um atributo (1-5): ");
+        int atributo;
+        scanf("%d", &atributo);
+        atributo--; // Ajusta para índice 0-based
+        
+        // Compara cartas
+        Carta carta1 = jogador1->cartas[0];
+        Carta carta2 = jogador2->cartas[0];
+        
+        printf("\nJogador 1: ");
+        mostrarCarta(carta1);
+        printf("Jogador 2: ");
+        mostrarCarta(carta2);
+        
+        int resultado = compararAtributos(carta1, carta2, atributo);
+        
+        if (resultado > 0) {
+            printf("\nJogador 1 vence a rodada!\n");
+            // Jogador 1 fica com as cartas
+            jogador1->cartas[jogador1->quantidade++] = carta2;
+            // Remove a carta do topo de cada jogador
+            for (int i = 0; i < jogador1->quantidade - 1; i++) {
+                jogador1->cartas[i] = jogador1->cartas[i + 1];
+            }
+            jogador1->quantidade--;
+            
+            for (int i = 0; i < jogador2->quantidade - 1; i++) {
+                jogador2->cartas[i] = jogador2->cartas[i + 1];
+            }
+            jogador2->quantidade--;
+        } else if (resultado < 0) {
+            printf("\nJogador 2 vence a rodada!\n");
+            // Jogador 2 fica com as cartas
+            jogador2->cartas[jogador2->quantidade++] = carta1;
+            // Remove a carta do topo de cada jogador
+            for (int i = 0; i < jogador1->quantidade - 1; i++) {
+                jogador1->cartas[i] = jogador1->cartas[i + 1];
+            }
+            jogador1->quantidade--;
+            
+            for (int i = 0; i < jogador2->quantidade - 1; i++) {
+                jogador2->cartas[i] = jogador2->cartas[i + 1];
+            }
+            jogador2->quantidade--;
+        } else {
+            printf("\nEmpate! As cartas são descartadas.\n");
+            // Remove a carta do topo de cada jogador
+            for (int i = 0; i < jogador1->quantidade - 1; i++) {
+                jogador1->cartas[i] = jogador1->cartas[i + 1];
+            }
+            jogador1->quantidade--;
+            
+            for (int i = 0; i < jogador2->quantidade - 1; i++) {
+                jogador2->cartas[i] = jogador2->cartas[i + 1];
+            }
+            jogador2->quantidade--;
+        }
+        
+        printf("\nCartas restantes - Jogador 1: %d, Jogador 2: %d\n", 
+               jogador1->quantidade, jogador2->quantidade);
+    }
+    
+    if (jogador1->quantidade > 0) {
+        printf("\nJogador 1 venceu o jogo!\n");
+    } else {
+        printf("\nJogador 2 venceu o jogo!\n");
+    }
+}
+
+int compararAtributos(Carta carta1, Carta carta2, int atributoEscolhido) {
+    return carta1.atributos[atributoEscolhido] - carta2.atributos[atributoEscolhido];
+}
+
+void mostrarCarta(Carta carta) {
+    printf("Carta: %s\n", carta.nome);
+    printf("Atributos:\n");
+    printf("1. Velocidade: %d\n", carta.atributos[0]);
+    printf("2. Potência: %d\n", carta.atributos[1]);
+    printf("3. Peso: %d\n", carta.atributos[2]);
+    printf("4. Aceleração: %d\n", carta.atributos[3]);
+    printf("5. Consumo: %d\n\n", carta.atributos[4]);
+}
